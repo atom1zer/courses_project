@@ -1,0 +1,101 @@
+
+services:
+    nginx:
+        restart: always
+        image: nginx:1.23-alpine
+        depends_on:
+            - server
+        ports:
+            - 80:80
+        volumes:
+            - ./backend/docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+            - static_volume:/app/backend/static
+    server:
+        restart: unless-stopped
+        build:
+            context: .
+            dockerfile: ./backend/docker/backend/Dockerfile
+        depends_on:
+            db:
+              condition: service_healthy
+              restart: true
+            redis:
+              condition: service_started
+        entrypoint: /app/backend/docker/server-entrypoint.sh
+        volumes:
+            - static_volume:/app/backend/static
+            - media_volume:/app/backend/media
+        expose:
+            - 8000     
+        environment:
+            DEBUG: "True"
+            SECRET_KEY: django-insecure-j26ljj68ba*-kuzj(_%5!c0vsm+ed10(%kh^=$-9o%lh)kpin=
+            
+            CELERY_BROKER_URL: "redis://redis:6379/0"
+            CELERY_RESULT_BACKEND: "redis://redis:6379/0"
+
+            SQL_ENGINE: postgresql
+            SQL_DATABASE: courses
+            SQL_USER: courses_admin
+            SQL_PASSWORD: courses_admin
+            SQL_HOST: db
+            SQL_PORT: 5432
+            
+            REDIS_HOST: redis
+            REDIS_PORT: 6379
+
+            EMAIL_BACKEND: smtp
+            EMAIL_HOST: smtp.yandex.ru
+            EMAIL_PORT: 587
+            EMAIL_HOST_USER: yahweh@yhwh-design.ru
+            EMAIL_HOST_PASSWORD: kcyiltydftfmdlfd
+    worker:
+        restart: unless-stopped
+        build:
+            context: .
+            dockerfile: ./backend/docker/backend/Dockerfile
+        entrypoint: /app/backend/docker/worker-entrypoint.sh
+        volumes:
+            - static_volume:/app/backend/static
+            - media_volume:/app/backend/media
+        environment:
+            DEBUG: "True"
+            CELERY_BROKER_URL: "redis://redis:6379/0"
+            CELERY_RESULT_BACKEND: "redis://redis:6379/0"
+            SQL_ENGINE: postgresql
+            SQL_DATABASE: courses
+            SQL_USER: courses_admin
+            SQL_PASSWORD: courses_admin
+            SQL_HOST: db
+            SQL_PORT: 5432
+            
+            REDIS_HOST: redis
+            REDIS_PORT: 6379
+        depends_on:
+            - server
+            - redis
+    redis:
+        restart: unless-stopped
+        image: redis:7.0.5-alpine 
+        expose:
+            - 6379
+    db:
+        image: postgres:14-alpine
+        restart: unless-stopped
+        volumes:
+            - ./db_init/:/docker-entrypoint-initdb.d
+            - postgres_data:/var/lib/postgresql/data/
+        environment:
+            POSTGRES_PASSWORD: courses_admin
+        expose:
+            - 5432
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U courses_admin -d courses"]
+            interval: 10s
+            timeout: 10s
+            retries: 5
+            start_period: 30s
+volumes:
+    static_volume: {}
+    media_volume: {}
+    postgres_data: {}
