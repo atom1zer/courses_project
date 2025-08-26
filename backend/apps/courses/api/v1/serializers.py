@@ -1,4 +1,3 @@
-from rest_framework import serializers
 from apps.courses.models import (
     Courses,
     Courses_Categories,
@@ -6,6 +5,9 @@ from apps.courses.models import (
     Lessons_Materials,
     Section_Lessons,
 )
+from rest_framework import serializers
+
+
 # from django.core.serializers.json import Serializer
 
 

@@ -1,24 +1,23 @@
-from rest_framework.views import exception_handler
-from rest_framework.response import Response
 from typing import (
-    Any,
     List,
     Optional,
     Union,
 )
-from rest_framework.status import is_client_error
+
+from icecream import ic
 from rest_framework import (
     status,
     exceptions,
 )
+from rest_framework.response import Response
+from rest_framework.status import is_client_error
+from rest_framework.views import exception_handler
 
 from .error_types import (
     ErrorType,
     Error,
     ErrorResponse,
 )
-
-from icecream import ic
 
 
 def custom_exception_handler(exc, context):

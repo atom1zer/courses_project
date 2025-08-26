@@ -1,4 +1,5 @@
 from django.urls import path
+
 from apps.courses.api.v1 import views
 
 urlpatterns = [

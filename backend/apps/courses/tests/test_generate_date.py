@@ -1,6 +1,4 @@
 from model_bakery import baker
-from django.test import TestCase
-from datetime import datetime as dt
 
 # category = baker.make('courses.Courses_Categories')
 

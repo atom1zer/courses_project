@@ -1,18 +1,22 @@
+import os
+# from moviepy import VideoFileClip
+import time
+
+from django.core.files.storage import FileSystemStorage
+from django.core.paginator import EmptyPage, Paginator, PageNotAnInteger
+from django.http import Http404, HttpResponse
+from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter
+from drf_standardized_errors.openapi_serializers import Error401Serializer
+from rest_framework import permissions
+from rest_framework import status
+from rest_framework.parsers import MultiPartParser  # FileUploadParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import permissions
-from django.http import Http404, HttpResponse
-from rest_framework import status
-from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter
-from django.core.paginator import EmptyPage, Paginator, PageNotAnInteger
 
-
-from apps.courses.models import (
-    Courses,
-    Courses_Categories,
-    Courses_Sections,
-    Lessons_Materials,
-    Section_Lessons,
+from apps.courses.api.v1.serializers import (
+    CourseDetailsSerializer,
+    Courses_CategoriesDetailsSerializer,
+    Courses_SectionDetailsSerializer,
 )
 from apps.courses.api.v1.serializers import (
     CoursesSerializer,
@@ -21,29 +25,21 @@ from apps.courses.api.v1.serializers import (
     Courses_SectionsSerializer,
     Lessons_MaterialsSerializer,
     Section_LessonsSerializer,
-    AnautorizedSerializer,
-)
-from apps.courses.api.v1.serializers import (
-    CourseDetailsSerializer,
-    Courses_CategoriesDetailsSerializer,
-    Courses_SectionDetailsSerializer,
 )
 from apps.courses.api.v1.serializers import (
     Section_LessonDetailsSerializer,
     Lessons_MaterialDetailsSerializer,
 )
-from core.utils.views import AbstractApiView, AbstractGetApiView, AbstractApiViewDetails
-from drf_standardized_errors.openapi_serializers import Error401Serializer
-
-from rest_framework.parsers import MultiPartParser #FileUploadParser
-
+from apps.courses.models import (
+    Courses,
+    Courses_Categories,
+    Courses_Sections,
+    Lessons_Materials,
+    Section_Lessons,
+)
 from core.utils.utils import upload_file_to_s3
+from core.utils.views import AbstractApiView, AbstractGetApiView, AbstractApiViewDetails
 
-from django.core.files.storage import FileSystemStorage
-
-import os
-from moviepy import VideoFileClip
-import time
 
 @extend_schema(tags=["Courses"])
 @extend_schema_view(
@@ -393,29 +389,30 @@ class Lessons_MaterialsFromLessonView(APIView):
             filename = fs.save(uploaded_file.name, uploaded_file) # Saves to MEDIA_ROOT
             file_path = fs.path(filename)
 
-            # Загрузите видео на Yandex Storage
-            # with open(file_path, 'rb') as f:
+            upload_file_to_s3(file_path,public_id)
+            # # Загрузите видео на Yandex Storage
+            #  with open(file_path, 'rb') as f:
             #     client.buckets().upload(os.getenv("AWS_STORAGE_BUCKET_NAME"), file_path, f.read())
 
-            for resolution in self.resolutions:
-                # Измените разрешение видео
-                video = VideoFileClip(file_path)
-                new_video = video.resized(width=int(resolution.split('x')[0]), height=int(resolution.split('x')[1]))
-
-                # Создайте новое имя файла с указанным разрешением
-                dst_filename = f'{uploaded_file.name}_{resolution}.mp4'
-
-                # Сэкономите видео в Yandex Storage под новым именем
-                new_video.write_videofile(dst_filename)
-                with open(dst_filename, 'rb') as f:
-                    upload_file_to_s3(dst_filename, public_id)
-                    remove_list.append(dst_filename)
-            remove_list.append(file_path)    
-            for file in remove_list:
-                os.remove(file)
-            # upload_file_to_s3.delay(file_path,public_id) # Pass path to Celery
-            end_time = time.time()
-            print(f"Time execute upload function: {end_time-start_time}")
+            # for resolution in self.resolutions:
+            #     # Измените разрешение видео
+            #     video = VideoFileClip(file_path)
+            #     new_video = video.resized(width=int(resolution.split('x')[0]), height=int(resolution.split('x')[1]))
+            #
+            #     # Создайте новое имя файла с указанным разрешением
+            #     dst_filename = f'{uploaded_file.name}_{resolution}.mp4'
+            #
+            #     # Сэкономите видео в Yandex Storage под новым именем
+            #     new_video.write_videofile(dst_filename)
+            #     with open(dst_filename, 'rb') as f:
+            #         upload_file_to_s3(dst_filename, public_id)
+            #         remove_list.append(dst_filename)
+            # remove_list.append(file_path)
+            # for file in remove_list:
+            #     os.remove(file)
+            # # upload_file_to_s3.delay(file_path,public_id) # Pass path to Celery
+            # end_time = time.time()
+            # print(f"Time execute upload function: {end_time-start_time}")
             return Response("Start upload file", status=status.HTTP_200_OK)
         return Response("File not found", status=status.HTTP_404_NOT_FOUND)
 

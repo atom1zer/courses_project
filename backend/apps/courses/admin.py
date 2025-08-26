@@ -1,4 +1,5 @@
 from django.contrib import admin
+
 from .models import Courses, Courses_Categories, Courses_Sections
 from .models import Section_Lessons, Lessons_Materials
 

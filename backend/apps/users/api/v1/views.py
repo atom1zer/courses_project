@@ -1,17 +1,3 @@
-from django.http import HttpRequest, HttpResponse, Http404
-from django.contrib.auth import authenticate
-from django.utils.translation import gettext as _
-from rest_framework.authtoken.models import Token
-from django.contrib.auth.tokens import default_token_generator
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import AllowAny
-from core.utils.utils import (
-    generate_and_send_verification_email,
-    generate_and_send_password_reset_email,
-    get_user_by_uidb64,
-)
 from apps.users.api.v1.serializers import (
     UserSerializer,
     VerifyAccountSerializer,
@@ -19,9 +5,22 @@ from apps.users.api.v1.serializers import (
     PasswordResetSerializer,
 )
 from apps.users.models import User
-
-from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter
+from core.utils.utils import (
+    generate_and_send_verification_email,
+    generate_and_send_password_reset_email,
+    get_user_by_uidb64,
+)
+from django.contrib.auth import authenticate
+from django.contrib.auth.tokens import default_token_generator
+from django.http import HttpRequest, HttpResponse, Http404
+from django.utils.translation import gettext as _
+from drf_spectacular.utils import extend_schema_view, extend_schema
 from drf_standardized_errors.openapi_serializers import Error401Serializer
+from rest_framework import status
+from rest_framework.authtoken.models import Token
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 
 class SignUpView(APIView):

@@ -1,7 +1,8 @@
 import os
+
 from celery import Celery
 
-if bool(os.getenv("DEBUG")) == True:
+if bool(os.getenv("DEBUG")):
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings.development")
 else:
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings.production")

@@ -1,30 +1,27 @@
+import os
+import random
+import redis
 from typing import Any, Dict
-import random, redis, os
-from django.contrib.auth.tokens import default_token_generator
-from django.conf import settings
-from django.template.loader import render_to_string
-from django.core.mail import EmailMultiAlternatives
-from django.utils.safestring import SafeText
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_bytes, force_str
-from rest_framework.response import Response
-from rest_framework import status
 
-from apps.users.models import (
-    User,
+from apps.courses.api.v1.serializers import (
+    Lessons_MaterialsSerializer,
 )
 from apps.courses.models import (
     Lessons_Materials,
     Section_Lessons,
 )
-from apps.courses.api.v1.serializers import (
-    Lessons_MaterialsSerializer,
+from apps.users.models import (
+    User,
 )
-
 from celery import shared_task
-
+from django.conf import settings
+from django.contrib.auth.tokens import default_token_generator
 from django.core.files import File
-
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.safestring import SafeText
 
 REDIS_CODE_EXPIRY = 600
 
@@ -114,27 +111,27 @@ def generate_and_send_password_reset_email(user: User) -> None:
 
     send_email_to_user.delay(subject, template, user.email)
 
-# @shared_task
-# def upload_file_to_s3(file_path,public_id):
-#     try:
-#         with open(file_path, 'rb') as f:
-#             django_file = File(f, name=os.path.basename(file_path))
-#             foreign_object = Section_Lessons.objects.get(public_id=public_id)
-#             Lessons_Materials.objects.create(lesson=foreign_object,content=django_file)
-#         os.remove(file_path) # Clean up temporary file
-#     except Exception as e:
-#         # Handle errors
-#         print(f"Error processing file: {e}")
-
+@shared_task
 def upload_file_to_s3(file_path,public_id):
     try:
         with open(file_path, 'rb') as f:
             django_file = File(f, name=os.path.basename(file_path))
             foreign_object = Section_Lessons.objects.get(public_id=public_id)
-            new_file = Lessons_Materials.objects.create(lesson=foreign_object,content=django_file)
-        new_file.url= new_file.content.url
-        new_file.save()
-        # os.remove(file_path) # Clean up temporary file
+            Lessons_Materials.objects.create(lesson=foreign_object,content=django_file)
+        os.remove(file_path) # Clean up temporary file
     except Exception as e:
         # Handle errors
         print(f"Error processing file: {e}")
+
+# def upload_file_to_s3(file_path,public_id):
+#     try:
+#         with open(file_path, 'rb') as f:
+#             django_file = File(f, name=os.path.basename(file_path))
+#             foreign_object = Section_Lessons.objects.get(public_id=public_id)
+#             new_file = Lessons_Materials.objects.create(lesson=foreign_object,content=django_file)
+#         new_file.url= new_file.content.url
+#         new_file.save()
+#         # os.remove(file_path) # Clean up temporary file
+#     except Exception as e:
+#         # Handle errors
+#         print(f"Error processing file: {e}")

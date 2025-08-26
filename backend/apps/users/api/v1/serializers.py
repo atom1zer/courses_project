@@ -1,10 +1,9 @@
+import redis
+from apps.users.models import User
+from core.utils.utils import get_user_by_uidb64, get_user_code_from_redis
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
-from apps.users.models import User
-from core.utils.utils import get_user_by_uidb64, get_user_code_from_redis
-import redis
-
 
 redis_conn = redis.Redis(host="127.0.0.1", port=6379)
 
